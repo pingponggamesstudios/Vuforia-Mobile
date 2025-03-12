@@ -67,6 +67,15 @@
         <a-entity camera></a-entity>
     </a-scene>
 
+    <a-scene embedded arjs="trackingMethod: best;">
+        <a-nft type="nft" url="pattern-cannon">
+            <!-- Instead of a 3D model, let's test with a simple red box -->
+            <a-box position="0 0 0" material="color: red;"></a-box>
+        </a-nft>
+        <a-entity camera></a-entity>
+    </a-scene>
+
+
     <script>
         // Language Data
         const facts = {
