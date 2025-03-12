@@ -42,31 +42,6 @@
     <div id="info-box"></div>
 
     <!-- AR Scene -->
-    <a-scene
-        embedded
-        arjs="trackingMethod: best; debugUIEnabled: false;"
-        renderer="logarithmicDepthBuffer: true;"
-        gesture-detector>
-        
-        <!-- NFT Marker (Replace with your NFT marker path) -->
-        <a-nft type="nft" url="pattern-cannon" smooth="true" smoothCount="10" smoothTolerance=".01" smoothThreshold="5">
-            
-            <!-- 3D Model -->
-            <a-entity id="model" 
-                gltf-model="url(Cannon.glb)" 
-                scale="1 1 1" 
-                position="0 0 0"
-                gesture-handler
-                event-set__click="_event: click; _target: #info-box; visible: true;">
-            </a-entity>
-            
-            
-        </a-nft>
-
-        <!-- Camera -->
-        <a-entity camera></a-entity>
-    </a-scene>
-
     <a-scene embedded arjs="trackingMethod: best;">
         <a-nft type="nft" url="pattern-cannon">
             <!-- Instead of a 3D model, let's test with a simple red box -->
@@ -74,6 +49,7 @@
         </a-nft>
         <a-entity camera></a-entity>
     </a-scene>
+    
 
 
     <script>
