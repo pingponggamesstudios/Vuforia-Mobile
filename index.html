@@ -3,128 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebAR Image Tracking</title>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ar.js@latest/aframe/build/aframe-ar.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script> <!-- For touch gestures -->
+    <title>WebGL AR</title>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mindar@1.2.3/dist/mindar-image-three.prod.js"></script>
     <style>
-        #info-box {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 10px;
-            display: none;
-            font-size: 18px;
-        }
-        #language-switch {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 8px;
-            font-size: 16px;
-            background: #fff;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-        }
+        body { margin: 0; overflow: hidden; }
+        #language-switch { position: fixed; top: 10px; right: 10px; background: white; padding: 10px; cursor: pointer; }
+        #fact-box { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.8); color: white; padding: 10px; display: none; }
     </style>
 </head>
-<body style="margin: 0; overflow: hidden;">
+<body>
 
-    <!-- Button to switch languages -->
-    <button id="language-switch">🇬🇧 English</button>
-
-    <!-- Information Box -->
-    <div id="info-box"></div>
-
-    <!-- AR Scene -->
-    <a-scene
-        embedded
-        arjs="trackingMethod: best; debugUIEnabled: true; stats:true; markersAreaEnabled: true;"
-        renderer="logarithmicDepthBuffer: true;"
-        gesture-detector>
-
-        <!-- Image Marker (Replace with your image marker path) -->
-        <a-marker type="pattern" url="pattern-cannon.patt" id="my-marker">
-            <!-- 3D Model -->
-            <a-entity id="model" 
-                gltf-model="url(Cannon.glb)" 
-                scale="10 10 10" 
-                position="0 0 0"
-                gesture-handler
-                event-set__click="_event: click; _target: #info-box; visible: true;">
-            </a-entity>
-        </a-marker>
-
-        <!-- Camera -->
-        <a-entity camera></a-entity>
-    </a-scene>
+    <div id="language-switch">Switch to Maltese</div>
+    <div id="fact-box">Tap the object for a fact</div>
 
     <script>
-        // Get the marker element
-        const marker = document.getElementById('my-marker');
-    
-        // Add event listeners for marker detection
-        marker.addEventListener('markerFound', () => {
-            console.log('Pattern detected!');
-        });
-    
-        marker.addEventListener('markerLost', () => {
-            console.log('Pattern lost!');
-        });
-    </script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            // MindAR setup
+            const mindarThree = new window.MINDAR.IMAGE.MindARThree({
+                container: document.body,
+                imageTargetSrc: "cannon.mind", // Replace with your MindAR marker file
+            });
 
-    <script>
-        // Language Data
-        const facts = {
-            "en": "This is a historical artifact found in Malta.",
-            "mt": "Dan huwa artifatt storiku misjub f'Malta."
-        };
-        let currentLang = "en";
+            const { renderer, scene, camera } = mindarThree;
+            const anchor = mindarThree.addAnchor(0); // Track first detected image
 
-        // Language Toggle Button
-        document.getElementById("language-switch").addEventListener("click", function () {
-            currentLang = (currentLang === "en") ? "mt" : "en";
-            this.textContent = (currentLang === "en") ? "🇬🇧 English" : "🇲🇹 Malti";
-        });
+            // Load 3D Model
+            const loader = new THREE.GLTFLoader();
+            let model;
+            loader.load("cannon.glb", (gltf) => { // Replace with your model path
+                model = gltf.scene;
+                model.scale.set(0.5, 0.5, 0.5);
+                model.position.set(0, 0, 0);
+                anchor.group.add(model);
+            });
 
-        // Show fact when object is clicked
-        document.getElementById("model").addEventListener("click", function () {
-            let infoBox = document.getElementById("info-box");
-            infoBox.textContent = facts[currentLang];
-            infoBox.style.display = "block";
+            // Touch Interactions (Rotation & Scaling)
+            let lastX = 0, lastY = 0, scale = 1;
+            document.body.addEventListener("touchstart", (event) => {
+                if (event.touches.length === 1) {
+                    lastX = event.touches[0].clientX;
+                    lastY = event.touches[0].clientY;
+                }
+            });
 
-            setTimeout(() => {
-                infoBox.style.display = "none";
-            }, 3000);
-        });
+            document.body.addEventListener("touchmove", (event) => {
+                if (event.touches.length === 1 && model) {
+                    let deltaX = event.touches[0].clientX - lastX;
+                    let deltaY = event.touches[0].clientY - lastY;
+                    model.rotation.y += deltaX * 0.01;
+                    model.rotation.x += deltaY * 0.01;
+                    lastX = event.touches[0].clientX;
+                    lastY = event.touches[0].clientY;
+                } else if (event.touches.length === 2 && model) {
+                    let dist = Math.hypot(
+                        event.touches[0].clientX - event.touches[1].clientX,
+                        event.touches[0].clientY - event.touches[1].clientY
+                    );
+                    scale = dist / 200;
+                    model.scale.set(scale, scale, scale);
+                }
+            });
 
-        // Gesture Handler for Rotation & Zoom
-        AFRAME.registerComponent("gesture-handler", {
-            init: function () {
-                let el = this.el;
-                let hammertime = new Hammer(document.body);
-                let scale = 0.2;
-                let rotation = { x: 0, y: 0 };
+            // Language & Fact Display
+            const languageSwitch = document.getElementById("language-switch");
+            const factBox = document.getElementById("fact-box");
+            let isEnglish = true;
 
-                // Pinch to Zoom
-                hammertime.get('pinch').set({ enable: true });
-                hammertime.on('pinch', function (ev) {
-                    scale = Math.min(1, Math.max(0.1, scale * ev.scale));
-                    el.setAttribute('scale', `${scale} ${scale} ${scale}`);
-                });
+            const facts = {
+                english: "This is an ancient Maltese artifact.",
+                maltese: "Dan huwa artifatt antik Malti."
+            };
 
-                // Rotate on Drag
-                hammertime.get('pan').set({ enable: true });
-                hammertime.on('pan', function (ev) {
-                    rotation.y += ev.deltaX * 0.1;
-                    el.setAttribute('rotation', `0 ${rotation.y} 0`);
-                });
-            }
+            model?.addEventListener("click", () => {
+                factBox.innerText = isEnglish ? facts.english : facts.maltese;
+                factBox.style.display = "block";
+                setTimeout(() => { factBox.style.display = "none"; }, 3000);
+            });
+
+            languageSwitch.addEventListener("click", () => {
+                isEnglish = !isEnglish;
+                languageSwitch.innerText = isEnglish ? "Switch to Maltese" : "Switch to English";
+            });
+
+            // Start AR Session
+            await mindarThree.start();
+            renderer.setAnimationLoop(() => { renderer.render(scene, camera); });
         });
     </script>
 
