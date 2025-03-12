@@ -3,90 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Example</title>
+    <title>WebAR NFT Tracking</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/AR.js/aframe/build/aframe-ar.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/AR.js/aframe/build/aframe-ar-nft.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script> <!-- For touch gestures -->
     <style>
-        body { margin: 0; overflow: hidden; }
-        .arjs-marker {
+        #info-box {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
             display: none;
+            font-size: 18px;
+        }
+        #language-switch {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 8px;
+            font-size: 16px;
+            background: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
         }
     </style>
 </head>
 <body style="margin: 0; overflow: hidden;">
 
-    <!-- A-Frame Scene with AR.js -->
-    <a-scene embedded arjs>
-        <!-- Image Marker for AR -->
-        <a-marker preset="custom" type="pattern" url="pattern-cannon.patt">
+    <!-- Button to switch languages -->
+    <button id="language-switch">🇬🇧 English</button>
+
+    <!-- Information Box -->
+    <div id="info-box"></div>
+
+    <!-- AR Scene -->
+    <a-scene
+        embedded
+        arjs="trackingMethod: best; debugUIEnabled: false;"
+        renderer="logarithmicDepthBuffer: true;"
+        gesture-detector>
+        
+        <!-- NFT Marker (Replace with your NFT marker path) -->
+        <a-nft type="nft" url="pattern-cannon.patt" smooth="true" smoothCount="10" smoothTolerance=".01" smoothThreshold="5">
+            
             <!-- 3D Model -->
-            <a-entity id="model"
-                      gltf-model="url(Cannon.glb)"
-                      scale="0.1 0.1 0.1"
-                      position="0 0 0"
-                      rotation="0 0 0"
-                      touchstart="rotateModel(event)"
-                      touchmove="resizeModel(event)"
-                      onclick="showFact()">
+            <a-entity id="model" 
+                gltf-model="url(Cannon.glb)" 
+                scale="0.2 0.2 0.2" 
+                position="0 0 0"
+                gesture-handler
+                event-set__click="_event: click; _target: #info-box; visible: true;">
             </a-entity>
-        </a-marker>
+            
+        </a-nft>
 
         <!-- Camera -->
         <a-entity camera></a-entity>
     </a-scene>
 
-    <!-- Fact Box (Initially hidden) -->
-    <div id="factBox" style="position: absolute; top: 20px; left: 20px; background-color: white; padding: 10px; display: none; border-radius: 5px;">
-        <p id="factText"></p>
-    </div>
-
     <script>
-        let isRotating = false;
-        let scaleFactor = 1;
+        // Language Data
+        const facts = {
+            "en": "This is a historical artifact found in Malta.",
+            "mt": "Dan huwa artifatt storiku misjub f'Malta."
+        };
+        let currentLang = "en";
 
-        // Rotate model on touch start
-        function rotateModel(event) {
-            let model = document.querySelector('#model');
-            isRotating = !isRotating;
+        // Language Toggle Button
+        document.getElementById("language-switch").addEventListener("click", function () {
+            currentLang = (currentLang === "en") ? "mt" : "en";
+            this.textContent = (currentLang === "en") ? "🇬🇧 English" : "🇲🇹 Malti";
+        });
 
-            if (isRotating) {
-                model.setAttribute('rotation', '0 0 0'); // Reset to original rotation
-            }
-        }
+        // Show fact when object is clicked
+        document.getElementById("model").addEventListener("click", function () {
+            let infoBox = document.getElementById("info-box");
+            infoBox.textContent = facts[currentLang];
+            infoBox.style.display = "block";
 
-        // Resize model by pinch gesture (touchmove)
-        function resizeModel(event) {
-            if (event.touches.length === 2) {
-                let distance = Math.sqrt(Math.pow(event.touches[1].pageX - event.touches[0].pageX, 2) + Math.pow(event.touches[1].pageY - event.touches[0].pageY, 2));
-                scaleFactor = distance / 200;
-                let model = document.querySelector('#model');
-                model.setAttribute('scale', `${scaleFactor} ${scaleFactor} ${scaleFactor}`);
-            }
-        }
-
-        // Show fact on object tap (toggle between Maltese and English)
-        function showFact() {
-            let factBox = document.querySelector('#factBox');
-            let factText = document.querySelector('#factText');
-
-            // Toggle language between Maltese and English
-            let currentLang = factText.getAttribute('lang');
-            if (currentLang === 'en') {
-                factText.setAttribute('lang', 'mt');
-                factText.textContent = 'Fatt: Din hija informazzjoni fil-lingwa Maltija!';
-            } else {
-                factText.setAttribute('lang', 'en');
-                factText.textContent = 'Fact: This is information in the English language!';
-            }
-
-            // Show the fact box
-            factBox.style.display = 'block';
-
-            // Hide the fact box after 5 seconds
             setTimeout(() => {
-                factBox.style.display = 'none';
-            }, 5000);
-        }
+                infoBox.style.display = "none";
+            }, 3000);
+        });
+
+        // Gesture Handler for Rotation & Zoom
+        AFRAME.registerComponent("gesture-handler", {
+            init: function () {
+                let el = this.el;
+                let hammertime = new Hammer(document.body);
+                let scale = 0.2;
+                let rotation = { x: 0, y: 0 };
+
+                // Pinch to Zoom
+                hammertime.get('pinch').set({ enable: true });
+                hammertime.on('pinch', function (ev) {
+                    scale = Math.min(1, Math.max(0.1, scale * ev.scale));
+                    el.setAttribute('scale', `${scale} ${scale} ${scale}`);
+                });
+
+                // Rotate on Drag
+                hammertime.get('pan').set({ enable: true });
+                hammertime.on('pan', function (ev) {
+                    rotation.y += ev.deltaX * 0.1;
+                    el.setAttribute('rotation', `0 ${rotation.y} 0`);
+                });
+            }
+        });
     </script>
 
 </body>
