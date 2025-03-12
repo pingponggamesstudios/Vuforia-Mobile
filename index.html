@@ -44,12 +44,12 @@
     <!-- AR Scene -->
     <a-scene
         embedded
-        arjs="trackingMethod: best; debugUIEnabled: false;"
+        arjs="trackingMethod: best; debugUIEnabled: true; stats:true;"
         renderer="logarithmicDepthBuffer: true;"
         gesture-detector>
 
         <!-- Image Marker (Replace with your image marker path) -->
-        <a-marker type="pattern" url="pattern-cannon.patt">
+        <a-marker type="pattern" url="pattern-cannon.patt" id="my-marker">
             <!-- 3D Model -->
             <a-entity id="model" 
                 gltf-model="url(Cannon.glb)" 
@@ -63,6 +63,20 @@
         <!-- Camera -->
         <a-entity camera></a-entity>
     </a-scene>
+
+    <script>
+        // Get the marker element
+        const marker = document.getElementById('my-marker');
+    
+        // Add event listeners for marker detection
+        marker.addEventListener('markerFound', () => {
+            console.log('Pattern detected!');
+        });
+    
+        marker.addEventListener('markerLost', () => {
+            console.log('Pattern lost!');
+        });
+    </script>
 
     <script>
         // Language Data
