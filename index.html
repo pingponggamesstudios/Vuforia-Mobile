@@ -1,20 +1,86 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ar.js@1.7.2/aframe/build/aframe-ar.min.js"></script>
-  </head>
-  <body style="margin: 0; overflow: hidden;">
-    <a-scene embedded arjs>
-      <!-- Camera -->
-      <a-marker type="pattern" url="pattern-cannon.patt">
-        <a-entity
-          gltf-model="models/cannon-model.glb"
-          position="0 0 0"
-          scale="0.5 0.5 0.5">
-        </a-entity>
-      </a-marker>
-      <a-entity camera></a-entity>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGL AR with AR.js</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://rawgit.com/jeromeetienne/ar.js/1.7.2/aframe/build/aframe-ar.min.js"></script>
+    <script>
+        let currentLanguage = 'english';
+        const facts = {
+            "object1": {
+                "english": ["Fact 1: This is a historical artifact.", "Fact 2: It was found in Malta."],
+                "maltese": ["Fatt 1: Dan huwa artifatt storiku.", "Fatt 2: Instab f’Malta."]
+            }
+        };
+
+        function toggleLanguage() {
+            currentLanguage = (currentLanguage === 'english') ? 'maltese' : 'english';
+            updateFact();
+        }
+
+        function updateFact() {
+            document.getElementById("fact-text").innerText = facts["object1"][currentLanguage][0];
+        }
+    </script>
+</head>
+<body style="margin: 0; overflow: hidden;">
+    <a-scene embedded arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: true;">
+        <a-marker preset="custom" type="pattern" url="pattern-cannon.patt">
+            <!--<a-entity id="model" 
+                      gltf-model="models/cannon-model.glb" 
+                      position="0 0 0" 
+                      scale="10 10 10" 
+                      rotation="0 180 0"
+                      gesture-handler>
+            </a-entity>-->
+            <a-box position="0 0.5 0" material="color: red;"></a-box>
+        </a-marker>
+        <a-entity camera></a-entity>
     </a-scene>
-  </body>
+    
+    <div style="position: absolute; top: 10px; left: 10px; background: white; padding: 10px; border-radius: 5px;">
+        <button onclick="toggleLanguage()">Switch Language</button>
+        <p id="fact-text">Fact 1: This is a historical artifact.</p>
+    </div>
+    
+    <script>
+        AFRAME.registerComponent('gesture-handler', {
+            init: function () {
+                let el = this.el;
+                let lastX, lastY;
+                
+                el.addEventListener('mousedown', function (event) {
+                    lastX = event.clientX;
+                    lastY = event.clientY;
+                });
+                
+                el.addEventListener('mousemove', function (event) {
+                    if (event.buttons !== 1) return;
+                    let deltaX = event.clientX - lastX;
+                    let deltaY = event.clientY - lastY;
+                    let rotation = el.getAttribute('rotation');
+                    el.setAttribute('rotation', {
+                        x: rotation.x + deltaY * 0.5,
+                        y: rotation.y + deltaX * 0.5,
+                        z: rotation.z
+                    });
+                    lastX = event.clientX;
+                    lastY = event.clientY;
+                });
+                
+                el.addEventListener('wheel', function (event) {
+                    let scale = el.getAttribute('scale');
+                    let factor = event.deltaY > 0 ? 0.9 : 1.1;
+                    el.setAttribute('scale', {
+                        x: scale.x * factor,
+                        y: scale.y * factor,
+                        z: scale.z * factor
+                    });
+                });
+            }
+        });
+    </script>
+</body>
 </html>
