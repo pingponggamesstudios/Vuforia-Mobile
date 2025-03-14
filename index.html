@@ -3,77 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebGL AR with AR.js</title>
+    <title>WebAR with A-Frame and MindAR</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://rawgit.com/jeromeetienne/ar.js/1.7.2/aframe/build/aframe-ar.min.js"></script>
-    <script>
-        let currentLanguage = 'english';
-        const facts = {
-            "object1": {
-                "english": ["Fact 1: This is a historical artifact.", "Fact 2: It was found in Malta."],
-                "maltese": ["Fatt 1: Dan huwa artifatt storiku.", "Fatt 2: Instab f’Malta."]
-            }
-        };
-
-        function toggleLanguage() {
-            currentLanguage = (currentLanguage === 'english') ? 'maltese' : 'english';
-            updateFact();
-        }
-
-        function updateFact() {
-            document.getElementById("fact-text").innerText = facts["object1"][currentLanguage][0];
-        }
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.1/dist/mindar-image-aframe.prod.js"></script>
 </head>
-<body style="margin: 0; overflow: hidden;">
-    <a-scene embedded arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: true;">
-        <a-marker type="pattern" url="pattern-image-target.patt">
-            <a-box position="0 0 0" depth="1" height="1" width="1" color="red"></a-box>
-        </a-marker>
-        <a-entity camera></a-entity>
+<body>
+    <a-scene mindar-image="imageTargetSrc: cannon.mind" embedded>
+        <a-camera position="0 0 0" look-controls="true"></a-camera>
+        
+        <!-- Define Image Target -->
+        <a-mindar-image-target targetIndex="0">
+            <!-- 3D Model Appears When Image is Detected -->
+            <a-gltf-model src="models/cannon-model.glb" position="0 0 0" scale="0.1 0.1 0.1"></a-gltf-model>
+        </a-mindar-image-target>
     </a-scene>
-    
-    <div style="position: absolute; top: 10px; left: 10px; background: white; padding: 10px; border-radius: 5px;">
-        <button onclick="toggleLanguage()">Switch Language</button>
-        <p id="fact-text">Fact 1: This is a historical artifact.</p>
-    </div>
-    
-    <script>
-        AFRAME.registerComponent('gesture-handler', {
-            init: function () {
-                let el = this.el;
-                let lastX, lastY;
-                
-                el.addEventListener('mousedown', function (event) {
-                    lastX = event.clientX;
-                    lastY = event.clientY;
-                });
-                
-                el.addEventListener('mousemove', function (event) {
-                    if (event.buttons !== 1) return;
-                    let deltaX = event.clientX - lastX;
-                    let deltaY = event.clientY - lastY;
-                    let rotation = el.getAttribute('rotation');
-                    el.setAttribute('rotation', {
-                        x: rotation.x + deltaY * 0.5,
-                        y: rotation.y + deltaX * 0.5,
-                        z: rotation.z
-                    });
-                    lastX = event.clientX;
-                    lastY = event.clientY;
-                });
-                
-                el.addEventListener('wheel', function (event) {
-                    let scale = el.getAttribute('scale');
-                    let factor = event.deltaY > 0 ? 0.9 : 1.1;
-                    el.setAttribute('scale', {
-                        x: scale.x * factor,
-                        y: scale.y * factor,
-                        z: scale.z * factor
-                    });
-                });
-            }
-        });
-    </script>
 </body>
 </html>
