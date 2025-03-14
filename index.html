@@ -5,136 +5,32 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   </head>
   <body>
-    <a-scene
-      mindar-image="imageTargetSrc: ./couvreDePorte.mind;"
-      color-space="sRGB"
-      renderer="colorManagement: true, physicallyCorrectLights"
-      vr-mode-ui="enabled: false"
+    <a-scene 
+      mindar-image="imageTargetSrc: cannon.mind;" 
+      color-space="sRGB" 
+      renderer="colorManagement: true, physicallyCorrectLights" 
+      vr-mode-ui="enabled: false" 
       device-orientation-permission-ui="enabled: false"
-      gesture-detector
     >
       <a-assets>
-        <img id="factBg" src="https://via.placeholder.com/512x256/000000/FFFFFF?text=Fact" />
-        <a-asset-item id="objectModel" src="models/cannon-model.glb"></a-asset-item>
+        <img id="card" src="couvreDePorte.jpg" />
+        <a-asset-item id="avatarModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/softmind/scene.gltf"></a-asset-item>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <!-- Image Target -->
       <a-entity mindar-image-target="targetIndex: 0">
+        <a-plane src="#card" position="0 0 0" height="0.552" width="1" rotation="0 0 0"></a-plane>
         
-        <!-- 3D Model -->
         <a-gltf-model 
-          id="object"
-          src="#objectModel"
-          position="0 0 0.1"
-          scale="0.1 0.1 0.1"
-          rotation="0 180 0"
-          gesture-handler
-        ></a-gltf-model>
-
-        <!-- Fact Display -->
-        <a-plane 
-          id="factPanel" 
-          src="#factBg" 
-          position="0 -0.3 0" 
-          width="1" 
-          height="0.5"
-          visible="false"
-        >
-          <a-text 
-            id="factText" 
-            value="" 
-            position="0 0 0.1" 
-            color="white" 
-            width="0.9"
-          ></a-text>
-        </a-plane>
+          src="#avatarModel" 
+          position="0 0 0.1" 
+          scale="0.01 0.01 0.01" 
+          rotation="0 0 0"
+          animation="property: position; to: 0 0.1 0.1; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate">
+        </a-gltf-model>
         
-        <!-- Language Switch Button -->
-        <a-plane 
-          id="langButton" 
-          position="0 -0.8 0" 
-          width="0.4" 
-          height="0.2" 
-          color="blue"
-        >
-          <a-text 
-            id="langText" 
-            value="🇬🇧 English" 
-            position="0 0 0.1" 
-            color="white"
-          ></a-text>
-        </a-plane>
-
       </a-entity>
     </a-scene>
-
-    <script>
-      // Language & Fact Data
-      const facts = {
-        "en": ["Fact 1: The Knights of Malta...", "Fact 2: Valletta was built in 1566...", "Secret Fact: A hidden tunnel..."],
-        "mt": ["Fatt 1: Il-Kavallieri ta’ Malta...", "Fatt 2: Valletta nbiet fl-1566...", "Fatt Sigriet: Mina moħbija..."]
-      };
-
-      let currentLang = "en";
-
-      // Get elements
-      const model = document.querySelector("#object");
-      const factPanel = document.querySelector("#factPanel");
-      const factText = document.querySelector("#factText");
-      const langButton = document.querySelector("#langButton");
-      const langText = document.querySelector("#langText");
-
-      // Handle Tap for Facts
-      model.addEventListener("click", () => {
-        let randomFact = Math.random() < 0.8 ? facts[currentLang][0] : facts[currentLang][2]; // 20% chance of secret fact
-        factText.setAttribute("value", randomFact);
-        factPanel.setAttribute("visible", "true");
-        setTimeout(() => factPanel.setAttribute("visible", "false"), 3000);
-      });
-
-      // Handle Language Switching
-      langButton.addEventListener("click", () => {
-        currentLang = currentLang === "en" ? "mt" : "en";
-        langText.setAttribute("value", currentLang === "en" ? "🇬🇧 English" : "🇲🇹 Malti");
-      });
-
-      // Gesture Controls (Resize & Rotate)
-      AFRAME.registerComponent("gesture-handler", {
-        init: function () {
-          let el = this.el;
-          let scaleFactor = 1;
-          let rotationY = 0;
-          let startDist = 0;
-          
-          this.el.sceneEl.addEventListener("touchstart", (event) => {
-            if (event.touches.length === 2) {
-              let dx = event.touches[0].clientX - event.touches[1].clientX;
-              let dy = event.touches[0].clientY - event.touches[1].clientY;
-              startDist = Math.sqrt(dx * dx + dy * dy);
-            }
-          });
-
-          this.el.sceneEl.addEventListener("touchmove", (event) => {
-            if (event.touches.length === 2) {
-              let dx = event.touches[0].clientX - event.touches[1].clientX;
-              let dy = event.touches[0].clientY - event.touches[1].clientY;
-              let newDist = Math.sqrt(dx * dx + dy * dy);
-              let scaleChange = newDist / startDist;
-              scaleFactor *= scaleChange;
-              el.setAttribute("scale", `${scaleFactor} ${scaleFactor} ${scaleFactor}`);
-              startDist = newDist;
-            }
-
-            if (event.touches.length === 1) {
-              let deltaX = event.touches[0].movementX || 0;
-              rotationY += deltaX * 0.5;
-              el.setAttribute("rotation", `0 ${rotationY} 0`);
-            }
-          });
-        }
-      });
-    </script>
   </body>
 </html>
